@@ -1,3 +1,5 @@
+import Result from '../result/Result';
+
 enum OptionType {
   None,
   Some
@@ -6,6 +8,7 @@ enum OptionType {
 type OptionInit<T> = { type: OptionType.None } | { type: OptionType.Some; value: T };
 type OptionInternal<T> = OptionInit<T>;
 type OptionValueGetter<T> = () => T;
+type OptionErrorGetter<E> = () => E;
 type OptionValueConverter<T, U> = (value: T) => Option<U>;
 type OptionGetter<T> = () => Option<T>;
 type OptionValuePredicate<T> = (value: T) => boolean;
@@ -85,16 +88,38 @@ export default class Option<T> {
   /*
    * Transforming contained values
    */
-  okOr() {
-    // TODO: implement after Result
+  okOr<E>(error: E): Result<T, E> {
+    if (this.internal.type === OptionType.None) {
+      return Result.Err<E, T>(error);
+    }
+
+    return Result.Ok<T, E>(this.internal.value);
   }
 
-  okOrElse() {
-    // TODO: implement after Result
+  okOrElse<E>(errorFunc: OptionErrorGetter<E>): Result<T, E> {
+    if (this.internal.type === OptionType.None) {
+      return Result.Err<E, T>(errorFunc());
+    }
+
+    return Result.Ok<T, E>(this.internal.value);
   }
 
-  transpose() {
-    // TODO: implement after Result
+  transpose<U, E>(): Result<Option<T>, E> {
+    if (this.internal.type === OptionType.None) {
+      const init: OptionInit<T> = { type: OptionType.None };
+      return Result.Ok<Option<T>, E>(new Option<T>(init));
+    }
+
+    if (this.internal.type === OptionType.Some) {
+      const { value } = this.internal;
+      if (value instanceof Result<U, E>) {
+        return value.isErr()
+          ? Result.Err<E, Option<T>>(value.unwrapErr())
+          : Result.Ok<Option<T>, E>(value.unwrap());
+      }
+    }
+
+    throw new Error('Called `transpose` on a invalid `Some` value.');
   }
 
   filter(predicate: OptionValuePredicate<T>): Option<T> {

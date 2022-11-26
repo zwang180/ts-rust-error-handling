@@ -1,3 +1,5 @@
+import Option from '../option/Option';
+
 enum ResultType {
   Ok,
   Err
@@ -103,16 +105,38 @@ export default class Result<T, E> {
   /*
    * Transforming contained values
    */
-  err() {
-    // TODO: implement after Option
+  err(): Option<E> {
+    if (this.internal.type === ResultType.Err) {
+      return Option.Some<E>(this.internal.error);
+    }
+
+    return Option.None<E>();
   }
 
-  ok() {
-    // TODO: implement after Option
+  ok(): Option<T> {
+    if (this.internal.type === ResultType.Err) {
+      return Option.None<T>();
+    }
+
+    return Option.Some<T>(this.internal.value);
   }
 
-  transpose() {
-    // TODO: implement after Option
+  transpose<U>(): Option<Result<T, E>> {
+    if (this.internal.type === ResultType.Err) {
+      const init: ResultInit<T, E> = { type: ResultType.Err, error: this.internal.error };
+      return Option.Some<Result<T, E>>(new Result<T, E>(init));
+    }
+
+    if (this.internal.type === ResultType.Ok) {
+      const { value } = this.internal;
+      if (value instanceof Option<U>) {
+        return value.isNone()
+          ? Option.None<Result<T, E>>()
+          : Option.Some<Result<T, E>>(value.unwrap());
+      }
+    }
+
+    throw new Error('Called `transpose` on a invalid `Ok` value.');
   }
 
   map<U>(valueMapperFunc: ResultValueMapper<T, U>): Result<U, E> {
