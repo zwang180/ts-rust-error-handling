@@ -13,7 +13,7 @@ type OptionValueMapper<T, U> = (value: T) => U;
 type OptionValueZipper<T, U, R> = (value: T, otherValue: U) => R;
 
 /*
- * Spec: https://doc.rust-lang.org/std/option/index.html
+ * Spec: https://doc.rust-lang.org/std/option/
  *
  * Omitted categories of methods:
  *   - Adapters for working with references
@@ -21,22 +21,34 @@ type OptionValueZipper<T, U, R> = (value: T, otherValue: U) => R;
  *   - Iterating over `Option` (reference related variants)
  *   - Collecting into `Option`
  */
-export class Option<T> {
+export default class Option<T> {
+  static None<TValue = unknown>(): Option<TValue> {
+    const init: OptionInit<TValue> = { type: OptionType.None };
+
+    return new Option<TValue>(init);
+  }
+
+  static Some<TValue>(value: TValue): Option<TValue> {
+    const init: OptionInit<TValue> = { type: OptionType.Some, value };
+
+    return new Option<TValue>(init);
+  }
+
   protected internal: OptionInternal<T>;
 
-  constructor(init: OptionInit<T>) {
+  private constructor(init: OptionInit<T>) {
     this.internal = { ...init };
   }
 
   /*
    * Querying the variant
    */
-  isSome(): boolean {
-    return this.internal.type === OptionType.Some;
-  }
-
   isNone(): boolean {
     return this.internal.type === OptionType.None;
+  }
+
+  isSome(): boolean {
+    return this.internal.type === OptionType.Some;
   }
 
   /*
