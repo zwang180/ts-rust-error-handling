@@ -121,7 +121,7 @@ export default class Result<T, E> {
     return Option.Some<T>(this.internal.value);
   }
 
-  transpose<U>(): Option<Result<T, E>> {
+  transpose(): Option<Result<T, E>> {
     if (this.internal.type === ResultType.Err) {
       const init: ResultInit<T, E> = { type: ResultType.Err, error: this.internal.error };
       return Option.Some<Result<T, E>>(new Result<T, E>(init));
@@ -129,7 +129,7 @@ export default class Result<T, E> {
 
     if (this.internal.type === ResultType.Ok) {
       const { value } = this.internal;
-      if (value instanceof Option<U>) {
+      if (value instanceof Option) {
         return value.isNone()
           ? Option.None<Result<T, E>>()
           : Option.Some<Result<T, E>>(value.unwrap());
